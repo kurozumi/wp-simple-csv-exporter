@@ -10,6 +10,8 @@ License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
 simple csv exporter.
 
+[![Build Status](https://travis-ci.org/kurozumi/wp-simple-csv-exporter.svg)](https://travis-ci.org/kurozumi/wp-simple-csv-exporter)
+
 == Description ==
 
 This is the long description.  No limit, and you can use Markdown (as well as in the following sections).
