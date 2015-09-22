@@ -15,8 +15,7 @@ $simple_csv_exporter->register();
 
 class Simple_CSV_Exporter
 {
-	const NAME     = "シンプルCSVエクスポーター";
-	
+	const NAME     = "シンプルCSVエクスポーター";	
 	const FILEMANE = "export.csv";
 
 	public function register()
