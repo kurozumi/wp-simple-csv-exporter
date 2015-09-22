@@ -243,16 +243,17 @@ __EOS__;
 	 */
 	public function add_column(&$results)
 	{
-		$results = array_map(function($result) use($this) {
+		$self = $this;
+		$results = array_map(function($result) use($self) {
 
 			// カテゴリがあれば追加
-			$this->set_post_category($result['ID'], $result);
+			$self->set_post_category($result['ID'], $result);
 
 			// タグがあれば追加
-			$this->set_post_tags($result['ID'], $result);
+			$self->set_post_tags($result['ID'], $result);
 
 			// カスタムフィールドを追加
-			$this->set_post_meta($result['ID'], $result);
+			$self->set_post_meta($result['ID'], $result);
 
 			return $result;
 		}, $results);		
