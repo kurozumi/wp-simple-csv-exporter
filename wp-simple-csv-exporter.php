@@ -183,7 +183,7 @@ __EOS__;
 	 * @param type $post_id
 	 * @param type $result
 	 */
-	public static function set_post_category($post_id, &$result)
+	public function set_post_category($post_id, &$result)
 	{
 		$post_category = "";
 		if ($cats = get_the_category($post_id))
@@ -201,7 +201,7 @@ __EOS__;
 	 * @param type $post_id
 	 * @param type $result
 	 */
-	public static function set_post_tags($post_id, &$result)
+	public function set_post_tags($post_id, &$result)
 	{
 		$post_tags = "";
 		if ($tags = get_the_tags($post_id))
@@ -219,7 +219,7 @@ __EOS__;
 	 * @param type $post_id
 	 * @param type $result
 	 */
-	public static function set_post_meta($post_id, &$result)
+	public function set_post_meta($post_id, &$result)
 	{
 		if (isset($_POST['meta_keys']) && !empty($_POST['meta_keys']))
 		{
@@ -243,16 +243,16 @@ __EOS__;
 	 */
 	public function add_column(&$results)
 	{
-		$results = array_map(function($result) {
+		$results = array_map(function($result) use($this) {
 
 			// カテゴリがあれば追加
-			self::set_post_category($result['ID'], $result);
+			$this->set_post_category($result['ID'], $result);
 
 			// タグがあれば追加
-			self::set_post_tags($result['ID'], $result);
+			$this->set_post_tags($result['ID'], $result);
 
 			// カスタムフィールドを追加
-			self::set_post_meta($result['ID'], $result);
+			$this->set_post_meta($result['ID'], $result);
 
 			return $result;
 		}, $results);		
