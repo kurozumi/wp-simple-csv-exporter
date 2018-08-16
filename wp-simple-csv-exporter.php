@@ -213,7 +213,7 @@ __EOS__;
 	/**
 	 * カテゴリをセット
 	 * @param type $post_id
-	 * @param type $result
+	 * @param type $post
 	 */
 	public function set_terms($post_id, &$post)
 	{
@@ -232,7 +232,7 @@ __EOS__;
                   }
 				}
  
-                $result = array_merge($post, array($taxonomy => $term_list));
+                $post = array_merge($post, array($taxonomy => $term_list));
             }
         }
 	}
@@ -263,25 +263,22 @@ __EOS__;
 	
 	/**
 	 * 投稿情報カラム以外のカラムを追加
-	 * @param type $results
+	 * @param type $posts
 	 * @return type
 	 */
-	public function add_column(&$results)
+	public function add_column(&$posts)
 	{
 		$self = $this;
-		$results = array_map(function($result) use($self) {
+		$posts = array_map(function($post) use($self) {
 
 			// カテゴリがあれば追加
-			$self->set_post_category($result['ID'], $result);
-
-			// タグがあれば追加
-			$self->set_post_tags($result['ID'], $result);
+			$self->set_terms($post["ID"], $post);
 
 			// カスタムフィールドを追加
-			$self->set_post_meta($result['ID'], $result);
+			$self->set_post_meta($post['ID'], $post);
 
-			return $result;
-		}, $results);		
+			return $post;
+		}, $posts);		
 	}
 
 	/**
@@ -298,19 +295,19 @@ __EOS__;
 		if (!$post_type)
 			throw new Exception("post_typeが正しくありません。");
 
-		$results = $this->get_posts_from_type($post_type->name);
+		$posts = $this->get_posts_from_type($post_type->name);
 
-		if (!$results)
+		if (!$posts)
 			throw new Exception(sprintf("%sの記事が見つかりませんでした。", $post_type->label));
 
 		// 投稿情報カラム以外のカラムを追加
-		$this->add_column($results);
+		$this->add_column($posts);
 		
 		// 項目名を取得
-		$head[] = array_keys(current($results));
+		$head[] = array_keys(current($posts));
 
 		// 先頭に項目名を追加
-		$list = array_merge($head, $results);
+		$list = array_merge($head, $posts);
 
 		// 1時データを保存するためストリームを準備
 		$fp = fopen('php://memory', 'r+b');
