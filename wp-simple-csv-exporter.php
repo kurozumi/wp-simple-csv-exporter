@@ -27,10 +27,12 @@ class Simple_CSV_Exporter
 
 	public function plugins_loaded()
 	{
-		add_action('admin_menu',                     array($this, 'add_submemu_page'));
-		add_action('init',                           array($this, 'download'));
-		add_action('wp_ajax_print_meta_keys',        array($this, 'print_meta_keys'));
-		add_action('wp_ajax_nopriv_print_meta_keys', array($this, 'print_meta_keys'));
+		add_action('admin_menu',                      array($this, 'add_submemu_page'));
+		add_action('init',                            array($this, 'download'));
+		add_action('wp_ajax_print_taxonomies',        array($this, 'print_taxonomies'));
+		add_action('wp_ajax_nopriv_print_taxonomies', array($this, 'print_taxonomies'));
+		add_action('wp_ajax_print_meta_keys',         array($this, 'print_meta_keys'));
+		add_action('wp_ajax_nopriv_print_meta_keys',  array($this, 'print_meta_keys'));
 	}
 
 	public function add_submemu_page()
@@ -49,6 +51,13 @@ class Simple_CSV_Exporter
 						post_type: $(this).val()
 					}, function (response) {
 						$('#meta-keys').empty().append(response);
+					});
+                    
+					$.post(ajaxurl, {
+						action: 'print_taxonomies',
+						post_type: $(this).val()
+					}, function (response) {
+						$('#taxonomies').empty().append(response);
 					});
 				});
 			})(window.jQuery);
@@ -72,6 +81,7 @@ class Simple_CSV_Exporter
 						</td>
 					</tr>
 				</table>
+                <table class="form-table" id="taxonomies"></table>
 				<table class="form-table" id="meta-keys"></table>
 				<p class="submit"><input type="submit" class="button-primary" value="エクスポート" /></p>
 			</form>
@@ -96,6 +106,28 @@ class Simple_CSV_Exporter
 			<?php
 		}
 	}
+    
+    /**
+     * タクソノミーがあれば表示
+     */
+    public function print_taxonomies()
+    {
+		if ($taxonomy_objects = get_object_taxonomies($_POST['post_type'], 'objects' ))
+		{
+			?>
+			<tr valign="top">
+				<th scope="row"><label for="inputtext">タクソノミーを選択</label></th>
+				<td>
+					<?php foreach ($taxonomy_objects as $taxonomy): ?>
+                    <p><label><input type="checkbox" name="taxonomies[]" value="<?php echo esc_attr($taxonomy->name); ?>" /><?php echo esc_html($taxonomy->name); ?></label></p> 
+					<?php endforeach; ?>
+				</td>
+			</tr>
+			<?php
+		}
+
+		die();
+    }
 
 	/**
 	 * カスタムフィールドがあれば表示
@@ -183,55 +215,48 @@ __EOS__;
 	 * @param type $post_id
 	 * @param type $result
 	 */
-	public function set_post_category($post_id, &$result)
+	public function set_terms($post_id, &$post)
 	{
-		$post_category = "";
-		if ($cats = get_the_category($post_id))
+		if (isset($_POST['taxonomies']) && !empty($_POST['taxonomies']))
 		{
-			$post_category = implode(',', array_map(function($cat) {
-				return $cat->slug;
-			}, $cats));
-		}
-		
-		$result = array_merge($result, array('post_category' => $post_category));
-	}
-	
-	/**
-	 * タグをセット
-	 * @param type $post_id
-	 * @param type $result
-	 */
-	public function set_post_tags($post_id, &$result)
-	{
-		$post_tags = "";
-		if ($tags = get_the_tags($post_id))
-		{
-			$post_tags = implode(',', array_map(function($tag) {
-				return $tag->slug;
-			}, $tags));
-		}
-		
-		$result = array_merge($result, array('post_tags' => $post_tags));
+			foreach ($_POST['taxonomies'] as $taxonomy)
+			{
+				$term_list = "";
+				if ($terms = get_the_terms($post_id, $taxonomy))
+				{
+                  if($terms[0]) {
+                    $term_list = array_map(function($term){
+                      return $term->name;
+                    }, $terms);
+                    $term_list = implode(",", $term_list);
+                  }
+				}
+ 
+                $result = array_merge($post, array($taxonomy => $term_list));
+            }
+        }
 	}
 	
 	/**
 	 * カスタムフィールドをセット
 	 * @param type $post_id
-	 * @param type $result
+	 * @param type $post
 	 */
-	public function set_post_meta($post_id, &$result)
+	public function set_post_meta($post_id, &$post)
 	{
 		if (isset($_POST['meta_keys']) && !empty($_POST['meta_keys']))
 		{
-			foreach ($_POST['meta_keys'] as $value)
+			foreach ($_POST['meta_keys'] as $key)
 			{
 				$field = "";
 				if ($fields = get_post_custom($post_id))
 				{
-					$field = implode(',', $fields[$value]);
+                    if(is_array($fields[$key])) {
+                      $field = implode(',', $fields[$key]);
+                    }
 				}
 
-				$result = array_merge($result, array($value => $field));
+				$post = array_merge($post, array($key => $field));
 			}
 		}
 	}
